@@ -12,3 +12,18 @@ spring:
     hibernate:
       ddl-auto: none
     open-in-view: false
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath*:db/init.sql
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.generated.ldesportsbar.model
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+
+logging:
+  level:
+    com.generated.ldesportsbar.mapper: DEBUG

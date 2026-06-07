@@ -17,9 +17,7 @@ CREATE TABLE IF NOT EXISTS seats (
   seat_status VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE',
   config_info VARCHAR(500),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX idx_seat_status (seat_status),
-  INDEX idx_area (area_name)
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 INSERT INTO seats (seat_code, area_name, seat_status, config_info) VALUES
@@ -49,15 +47,11 @@ CREATE TABLE IF NOT EXISTS maintenance_orders (
   priority VARCHAR(20) NOT NULL DEFAULT 'MEDIUM',
   process_result VARCHAR(500),
   timeout_minutes INT NOT NULL DEFAULT 60,
-  notified_timeout TINYINT(1) DEFAULT 0,
+  notified_timeout BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   assigned_at TIMESTAMP NULL,
-  completed_at TIMESTAMP NULL,
-  INDEX idx_order_status (order_status),
-  INDEX idx_seat_id (seat_id),
-  INDEX idx_created_at (created_at),
-  FOREIGN KEY (seat_id) REFERENCES seats(id)
+  completed_at TIMESTAMP NULL
 );
 
 CREATE TABLE IF NOT EXISTS notifications (
@@ -68,8 +62,6 @@ CREATE TABLE IF NOT EXISTS notifications (
   content VARCHAR(500) NOT NULL,
   notification_type VARCHAR(30) NOT NULL,
   related_order_id INT,
-  is_read TINYINT(1) DEFAULT 0,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_recipient (recipient_role, is_read),
-  INDEX idx_created_at (created_at)
+  is_read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

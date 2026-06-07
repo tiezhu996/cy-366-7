@@ -1,15 +1,60 @@
 package com.generated.ldesportsbar.service;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import com.generated.ldesportsbar.model.FeatureItem;
 import com.generated.ldesportsbar.model.KpiItem;
+import com.generated.ldesportsbar.model.MaintenanceOrder;
+import com.generated.ldesportsbar.model.MaintenanceStats;
 import com.generated.ldesportsbar.model.OperationRecord;
 import com.generated.ldesportsbar.model.OverviewResponse;
 
 @Service
 public class OverviewService {
+  private final MaintenanceOrderService maintenanceOrderService;
+
+  public OverviewService(MaintenanceOrderService maintenanceOrderService) {
+    this.maintenanceOrderService = maintenanceOrderService;
+  }
+
   public OverviewResponse getOverview() {
+    MaintenanceStats stats = maintenanceOrderService.getStats();
+    List<MaintenanceOrder> allOrders = maintenanceOrderService.getAllOrders();
+    List<MaintenanceOrder> recentOrders = allOrders.stream().limit(5).toList();
+
+    List<OperationRecord> records = new ArrayList<>(List.of(
+      new OperationRecord("ldesportsbar-1", "机位/包厢实时状态看板", "运营组", "已上线", "88%", "高"),
+      new OperationRecord("ldesportsbar-2", "会员充值与时长包", "管理员", "排期中", "31 单", "中"),
+      new OperationRecord("ldesportsbar-3", "机位预约与续费", "服务台", "巡检中", "10 项", "低"),
+      new OperationRecord("ldesportsbar-4", "上机时长排行榜", "财务组", "优化中", "4 级", "高"),
+      new OperationRecord("ldesportsbar-5", "赛事报名与战队管理", "审核组", "可导出", "28 条", "中")
+    ));
+
+    for (MaintenanceOrder order : recentOrders) {
+      String statusText = switch (order.getOrderStatus()) {
+        case PENDING -> "待派工";
+        case ASSIGNED -> "已派工";
+        case PROCESSING -> "处理中";
+        case COMPLETED -> "已完成";
+        case CANCELLED -> "已取消";
+      };
+      String priorityText = switch (order.getPriority()) {
+        case LOW -> "低";
+        case MEDIUM -> "中";
+        case HIGH -> "高";
+        case URGENT -> "紧急";
+      };
+      records.add(new OperationRecord(
+        "maintenance-" + order.getId(),
+        order.getOrderNo() + " - " + order.getSeatCode(),
+        order.getAssigneeGroup(),
+        statusText,
+        order.getFaultType().getDescription(),
+        priorityText
+      ));
+    }
+
     return new OverviewResponse(
       "电竞馆上机管理系统",
       "ldesportsbar",
@@ -18,16 +63,18 @@ public class OverviewService {
         new FeatureItem(2, "会员充值与时长包", "会员账户支持充值余额，购买时长包（如10小时/30小时/月卡），消费时优先扣除时长包余额，不足时扣余额。", "排期中", "31 单"),
         new FeatureItem(3, "机位预约与续费", "会员可提前预约指定机位和时段，到店扫码开机，使用过程中可续费延长上机时间，快到期前提醒续费。", "巡检中", "10 项"),
         new FeatureItem(4, "上机时长排行榜", "记录会员累计上机时长，生成日/周/月排行榜，激励高频玩家，支持按游戏类型分类统计。", "优化中", "4 级"),
-        new FeatureItem(5, "赛事报名与战队管理", "门店发布电竞赛事（如LOL/CSGO/王者荣耀），玩家以个人或战队形式报名，系统自动抽签分组，记录比赛结果和战绩。", "可导出", "28 条")),
+        new FeatureItem(5, "赛事报名与战队管理", "门店发布电竞赛事（如LOL/CSGO/王者荣耀），玩家以个人或战队形式报名，系统自动抽签分组，记录比赛结果和战绩。", "可导出", "28 条"),
+        new FeatureItem(6, "维修工单系统", "机位报故障自动生成工单派给技术组，超时提醒店长，修好后机位自动恢复可用。", stats.getTimeoutCount() > 0 ? "有超时" : "运行中",
+          String.format("%d待处理/%d处理中", stats.getPendingCount(), stats.getProcessingCount()))),
       List.of(new KpiItem("今日处理", "106", "+12%", "primary"),
         new KpiItem("预约/订单", "43", "+8%", "warm"),
         new KpiItem("履约率", "91%", "+3%", "cool"),
-        new KpiItem("待处理", "10", "需跟进", "neutral")),
-      List.of(new OperationRecord("ldesportsbar-1", "机位/包厢实时状态看板", "运营组", "已上线", "88%", "高"),
-        new OperationRecord("ldesportsbar-2", "会员充值与时长包", "管理员", "排期中", "31 单", "中"),
-        new OperationRecord("ldesportsbar-3", "机位预约与续费", "服务台", "巡检中", "10 项", "低"),
-        new OperationRecord("ldesportsbar-4", "上机时长排行榜", "财务组", "优化中", "4 级", "高"),
-        new OperationRecord("ldesportsbar-5", "赛事报名与战队管理", "审核组", "可导出", "28 条", "中"))
+        new KpiItem("待处理", String.valueOf(stats.getPendingCount()),
+          stats.getTimeoutCount() > 0 ? stats.getTimeoutCount() + "个超时" : "需跟进",
+          stats.getTimeoutCount() > 0 ? "warm" : "neutral")),
+      records,
+      stats,
+      recentOrders
     );
   }
 }

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.generated.ldesportsbar.mapper.MaintenanceOrderMapper">
+
+  <resultMap id="MaintenanceOrderResultMap" type="com.generated.ldesportsbar.model.MaintenanceOrder">
+    <id property="id" column="id"/>
+    <result property="orderNo" column="order_no"/>
+    <result property="seatId" column="seat_id"/>
+    <result property="seatCode" column="seat_code"/>
+    <result property="areaName" column="area_name"/>
+    <result property="faultType" column="fault_type"/>
+    <result property="description" column="description"/>
+    <result property="reporterName" column="reporter_name"/>
+    <result property="assigneeGroup" column="assignee_group"/>
+    <result property="assigneeName" column="assignee_name"/>
+    <result property="orderStatus" column="order_status"/>
+    <result property="priority" column="priority"/>
+    <result property="processResult" column="process_result"/>
+    <result property="timeoutMinutes" column="timeout_minutes"/>
+    <result property="notifiedTimeout" column="notified_timeout"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+    <result property="assignedAt" column="assigned_at"/>
+    <result property="completedAt" column="completed_at"/>
+  </resultMap>
+
+  <resultMap id="MaintenanceStatsResultMap" type="com.generated.ldesportsbar.model.MaintenanceStats">
+    <result property="pendingCount" column="pending_count"/>
+    <result property="processingCount" column="processing_count"/>
+    <result property="completedToday" column="completed_today"/>
+    <result property="timeoutCount" column="timeout_count"/>
+  </resultMap>
+
+  <sql id="baseSelect">
+    SELECT mo.*, s.seat_code, s.area_name
+    FROM maintenance_orders mo
+    LEFT JOIN seats s ON mo.seat_id = s.id
+  </sql>
+
+  <select id="findAll" resultMap="MaintenanceOrderResultMap">
+    <include refid="baseSelect"/>
+    ORDER BY mo.created_at DESC
+  </select>
+
+  <select id="findByStatus" resultMap="MaintenanceOrderResultMap">
+    <include refid="baseSelect"/>
+    WHERE mo.order_status = #{status}
+    ORDER BY mo.created_at DESC
+  </select>
+
+  <select id="findBySeatId" resultMap="MaintenanceOrderResultMap">
+    <include refid="baseSelect"/>
+    WHERE mo.seat_id = #{seatId}
+    ORDER BY mo.created_at DESC
+  </select>
+
+  <select id="findByAssigneeGroup" resultMap="MaintenanceOrderResultMap">
+    <include refid="baseSelect"/>
+    WHERE mo.assignee_group = #{assigneeGroup}
+    ORDER BY mo.created_at DESC
+  </select>
+
+  <select id="findTimeoutOrders" resultMap="MaintenanceOrderResultMap">
+    <include refid="baseSelect"/>
+    WHERE mo.order_status IN ('PENDING', 'ASSIGNED', 'PROCESSING')
+      AND TIMESTAMPDIFF(MINUTE, mo.created_at, #{now}) &gt; mo.timeout_minutes
+    ORDER BY mo.created_at DESC
+  </select>
+
+  <select id="findTimeoutNotNotified" resultMap="MaintenanceOrderResultMap">
+    <include refid="baseSelect"/>
+    WHERE mo.order_status IN ('PENDING', 'ASSIGNED', 'PROCESSING')
+      AND TIMESTAMPDIFF(MINUTE, mo.created_at, #{now}) &gt; mo.timeout_minutes
+      AND mo.notified_timeout = 0
+    ORDER BY mo.created_at DESC
+  </select>
+
+  <select id="findById" resultMap="MaintenanceOrderResultMap">
+    <include refid="baseSelect"/>
+    WHERE mo.id = #{id}
+  </select>
+
+  <select id="findByOrderNo" resultMap="MaintenanceOrderResultMap">
+    <include refid="baseSelect"/>
+    WHERE mo.order_no = #{orderNo}
+  </select>
+
+  <select id="getStats" resultMap="MaintenanceStatsResultMap">
+    SELECT
+      (SELECT COUNT(*) FROM maintenance_orders WHERE order_status IN ('PENDING', 'ASSIGNED')) AS pending_count,
+      (SELECT COUNT(*) FROM maintenance_orders WHERE order_status = 'PROCESSING') AS processing_count,
+      (SELECT COUNT(*) FROM maintenance_orders WHERE order_status = 'COMPLETED' AND DATE(completed_at) = CURDATE()) AS completed_today,
+      (SELECT COUNT(*) FROM maintenance_orders
+       WHERE order_status IN ('PENDING', 'ASSIGNED', 'PROCESSING')
+       AND TIMESTAMPDIFF(MINUTE, created_at, NOW()) &gt; timeout_minutes) AS timeout_count
+  </select>
+
+  <insert id="insert" parameterType="com.generated.ldesportsbar.model.MaintenanceOrder" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO maintenance_orders (
+      order_no, seat_id, fault_type, description, reporter_name,
+      assignee_group, order_status, priority, timeout_minutes, notified_timeout
+    ) VALUES (
+      #{orderNo}, #{seatId}, #{faultType}, #{description}, #{reporterName},
+      #{assigneeGroup}, #{orderStatus}, #{priority}, #{timeoutMinutes}, #{notifiedTimeout}
+    )
+  </insert>
+
+  <update id="update" parameterType="com.generated.ldesportsbar.model.MaintenanceOrder">
+    UPDATE maintenance_orders SET
+      fault_type = #{faultType},
+      description = #{description},
+      assignee_group = #{assigneeGroup},
+      assignee_name = #{assigneeName},
+      order_status = #{orderStatus},
+      priority = #{priority},
+      process_result = #{processResult},
+      timeout_minutes = #{timeoutMinutes},
+      notified_timeout = #{notifiedTimeout},
+      updated_at = CURRENT_TIMESTAMP,
+      assigned_at = #{assignedAt},
+      completed_at = #{completedAt}
+    WHERE id = #{id}
+  </update>
+
+  <update id="updateStatus">
+    UPDATE maintenance_orders SET order_status = #{status}, updated_at = #{updatedAt} WHERE id = #{id}
+  </update>
+
+  <update id="updateNotifiedTimeout">
+    UPDATE maintenance_orders SET notified_timeout = #{notified} WHERE id = #{id}
+  </update>
+
+  <update id="markNotifiedTimeout">
+    UPDATE maintenance_orders SET notified_timeout = 1 WHERE id IN
+    <foreach collection="ids" item="id" open="(" separator="," close=")">
+      #{id}
+    </foreach>
+  </update>
+
+</mapper>

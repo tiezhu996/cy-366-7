@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.generated.ldesportsbar.mapper.SeatMapper">
+
+  <resultMap id="SeatResultMap" type="com.generated.ldesportsbar.model.Seat">
+    <id property="id" column="id"/>
+    <result property="seatCode" column="seat_code"/>
+    <result property="areaName" column="area_name"/>
+    <result property="seatStatus" column="seat_status"/>
+    <result property="configInfo" column="config_info"/>
+    <result property="createdAt" column="created_at"/>
+    <result property="updatedAt" column="updated_at"/>
+  </resultMap>
+
+  <select id="findAll" resultMap="SeatResultMap">
+    SELECT * FROM seats ORDER BY seat_code
+  </select>
+
+  <select id="findByStatus" resultMap="SeatResultMap">
+    SELECT * FROM seats WHERE seat_status = #{status} ORDER BY seat_code
+  </select>
+
+  <select id="findByArea" resultMap="SeatResultMap">
+    SELECT * FROM seats WHERE area_name = #{areaName} ORDER BY seat_code
+  </select>
+
+  <select id="findById" resultMap="SeatResultMap">
+    SELECT * FROM seats WHERE id = #{id}
+  </select>
+
+  <select id="findBySeatCode" resultMap="SeatResultMap">
+    SELECT * FROM seats WHERE seat_code = #{seatCode}
+  </select>
+
+  <update id="updateStatus">
+    UPDATE seats SET seat_status = #{status}, updated_at = CURRENT_TIMESTAMP WHERE id = #{id}
+  </update>
+
+  <insert id="insert" parameterType="com.generated.ldesportsbar.model.Seat" useGeneratedKeys="true" keyProperty="id">
+    INSERT INTO seats (seat_code, area_name, seat_status, config_info)
+    VALUES (#{seatCode}, #{areaName}, #{seatStatus}, #{configInfo})
+  </insert>
+
+  <update id="update" parameterType="com.generated.ldesportsbar.model.Seat">
+    UPDATE seats SET
+      seat_code = #{seatCode},
+      area_name = #{areaName},
+      seat_status = #{seatStatus},
+      config_info = #{configInfo},
+      updated_at = CURRENT_TIMESTAMP
+    WHERE id = #{id}
+  </update>
+
+</mapper>

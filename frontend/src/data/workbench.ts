@@ -1,4 +1,4 @@
-import type { FeatureItem, KpiItem, OperationRecord } from "../types";
+import type { FeatureItem, KpiItem, OperationRecord, MaintenanceStats, MaintenanceOrder } from "../types";
 
 export const localFeatures: FeatureItem[] = [
   {
@@ -35,6 +35,13 @@ export const localFeatures: FeatureItem[] = [
     "description": "门店发布电竞赛事（如LOL/CSGO/王者荣耀），玩家以个人或战队形式报名，系统自动抽签分组，记录比赛结果和战绩。",
     "status": "可导出",
     "metric": "28 条"
+  },
+  {
+    "id": 6,
+    "title": "维修工单系统",
+    "description": "机位报故障自动生成工单派给技术组，超时提醒店长，修好后机位自动恢复可用。",
+    "status": "运行中",
+    "metric": "0待处理/0处理中"
   }
 ];
 
@@ -59,7 +66,7 @@ export const localKpis: KpiItem[] = [
   },
   {
     "label": "待处理",
-    "value": "10",
+    "value": "0",
     "trend": "需跟进",
     "tone": "neutral"
   }
@@ -107,3 +114,12 @@ export const operationRecords: OperationRecord[] = [
     "priority": "中"
   }
 ];
+
+export const defaultMaintenanceStats: MaintenanceStats = {
+  pendingCount: 0,
+  processingCount: 0,
+  completedToday: 0,
+  timeoutCount: 0,
+};
+
+export const defaultRecentOrders: MaintenanceOrder[] = [];
